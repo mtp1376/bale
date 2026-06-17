@@ -18,15 +18,12 @@ plus typed access to **all 607 raw RPCs** (52 services) when you need them.
 ## Install
 
 ```bash
-pip install bale
+pip install bale-sdk
 ```
 
-Requires Python 3.9+. Dependencies: `websockets` and `protobuf`.
-
-> Until it is published, install from source:
-> ```bash
-> pip install /path/to/bale-py
-> ```
+The distribution is named `bale-sdk`, but you **import it as `bale`** (like
+`beautifulsoup4` → `import bs4`). Requires Python 3.9+. Dependencies:
+`websockets` and `protobuf`.
 
 ## Authentication
 
