@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bale"
+description = "Unofficial async Python client for Bale messenger's web RPC API (reverse-engineered), with a Telethon-style high-level API and event system."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { file = "LICENSE" }
+authors = [{ name = "Mohammad Teimori Pabandi" }]
+keywords = ["bale", "messenger", "rpc", "protobuf", "grpc-web", "async", "asyncio", "websocket", "telethon"]
+dynamic = ["version"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: Other/Proprietary License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Framework :: AsyncIO",
+    "Topic :: Communications :: Chat",
+    "Typing :: Typed",
+]
+dependencies = [
+    "websockets>=13",
+    "protobuf>=6.31.1,<7",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7", "pytest-asyncio>=0.21", "build", "twine"]
+
+[project.urls]
+# Fill these in when you create the repository:
+# Homepage = "https://github.com/<you>/bale-py"
+# Issues = "https://github.com/<you>/bale-py/issues"
+
+[tool.setuptools]
+packages = ["bale"]
+
+[tool.setuptools.dynamic]
+version = { attr = "bale._version.__version__" }
+
+[tool.setuptools.package-data]
+bale = ["py.typed"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
