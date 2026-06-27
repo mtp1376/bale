@@ -6,7 +6,7 @@ from bale import Peer, pb
 from bale import envelope as env
 from bale import events
 from bale._rpc import populate
-from bale.client import _iter_updates, _uid_from_token
+from bale.client import _iter_rid_date, _iter_updates, _uid_from_token
 
 
 # --------------------------------------------------------------------------- #
@@ -153,6 +153,39 @@ def test_longtext_message_is_decoded_as_text():
     m.longTextMessage.text = "a very long body"
     c = normalize.parse_message(m)
     assert c.kind == "text" and c.text == "a very long body"
+
+
+def test_forward_iter_rid_date_forms():
+    from bale.client import _iter_rid_date
+    from bale import Message
+    from bale.normalize import Content
+    # single (rid, date) pair
+    assert list(_iter_rid_date((5, 99))) == [(5, 99)]
+    # list of pairs
+    assert list(_iter_rid_date([(1, 2), (3, 4)])) == [(1, 2), (3, 4)]
+    # dict
+    assert list(_iter_rid_date({"rid": 7, "date": 8})) == [(7, 8)]
+    # a single Message/HistoryEntry (carries rid + date)
+    msg = Message(rid=11, date=22, sender_id=0, content=Content(kind="text", text="x"))
+    assert list(_iter_rid_date(msg)) == [(11, 22)]
+    assert list(_iter_rid_date([msg, msg])) == [(11, 22), (11, 22)]
+
+
+def test_forward_requires_both_rid_and_date():
+    from bale.client import _iter_rid_date
+    with pytest.raises(TypeError):
+        list(_iter_rid_date([(5,)]))  # rid only -> missing date
+
+
+def test_forward_request_sets_date_value():
+    # the ForwardMessages request must carry date (Int64Value) per source msg
+    req = pb.ForwardMessagesRequest()
+    for rid, date in _iter_rid_date([(123, 456)]):
+        fwd = req.forwardedMessages.add()
+        fwd.rid = rid
+        fwd.date.value = date
+    assert req.forwardedMessages[0].rid == 123
+    assert req.forwardedMessages[0].date.value == 456
 
 
 def test_coerce_builder_rejects_garbage():

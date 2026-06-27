@@ -3,6 +3,15 @@
 All notable changes to this project are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.1] — 2026-06-17
+
+### Fixed
+- `forward_messages` now sends each source message's **`date`** alongside its
+  `rid` (Bale matches on both — a `rid` alone silently fails, so forwarding
+  never actually worked before). The method now takes `messages` (a `Message`/
+  `HistoryEntry`, a `(rid, date)` pair, a `{rid, date}` mapping, or a list of
+  these) instead of bare `rids`. Verified live.
+
 ## [0.1.0] — 2026-06-17
 
 First packaged release.

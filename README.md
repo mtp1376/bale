@@ -79,7 +79,7 @@ asyncio.run(main())
 | `await client.send_message(ref, text, reply_to=None)` | Send a text message (optionally quoting). |
 | `await client.edit_message(ref, rid, text)` | Edit a message. |
 | `await client.delete_messages(ref, rids, revoke=True)` | Delete messages. |
-| `await client.forward_messages(to, rids, from_)` | Forward messages. |
+| `await client.forward_messages(to, messages, from_)` | Forward messages (pass `Message` objects or `(rid, date)` pairs — Bale needs both). |
 | `await client.react(ref, rid, "❤")` | React to a message. |
 | `await client.mark_read(ref)` | Mark a chat read. |
 | `await client.get_messages(ref, limit=100)` | Fetch messages (list). |

@@ -68,6 +68,33 @@ def _uid_from_token(token: str) -> Optional[int]:
     return find(claims)
 
 
+def _iter_rid_date(messages):
+    """Yield ``(rid, date)`` for each source message for forwarding.
+
+    Accepts a single item or an iterable of: a :class:`Message`/``HistoryEntry``
+    (uses ``.rid``/``.date``), a ``(rid, date)`` pair, or a mapping with
+    ``rid``/``date`` keys. Bale needs both values to locate a message."""
+    if isinstance(messages, dict):
+        single = "rid" in messages and "date" in messages
+    elif isinstance(messages, (tuple, list)):
+        single = len(messages) == 2 and all(isinstance(x, int) for x in messages)
+    else:
+        single = hasattr(messages, "rid") and hasattr(messages, "date")
+    for item in ([messages] if single else messages):
+        if isinstance(item, dict):
+            rid, date = item.get("rid"), item.get("date")
+        elif isinstance(item, (tuple, list)) and len(item) == 2:
+            rid, date = item
+        else:
+            rid, date = getattr(item, "rid", None), getattr(item, "date", None)
+        if rid is None or date is None:
+            raise TypeError(
+                "forward_messages: each message needs a rid AND a date — pass a "
+                "Message/HistoryEntry or a (rid, date) pair"
+            )
+        yield int(rid), int(date)
+
+
 class BaleClient:
     def __init__(self, access_token: str):
         self.transport = Transport(access_token)
@@ -363,16 +390,27 @@ class BaleClient:
             "bale.messaging.v2.Messaging", "DeleteMessage", req, timeout=8.0,
         )
 
-    async def forward_messages(self, to_ref: PeerRef, rids, from_ref: PeerRef):
-        """Forward messages (by rid) from ``from_ref`` to ``to_ref``."""
+    async def forward_messages(self, to_ref: PeerRef, messages, from_ref: PeerRef):
+        """Forward messages from ``from_ref`` to ``to_ref``.
+
+        Bale locates a source message by **both** its ``rid`` and its original
+        ``date`` — a rid alone is not enough — so each item in ``messages`` must
+        carry both. Accepts:
+
+        * a :class:`Message` / ``HistoryEntry`` (uses its ``.rid`` and ``.date``),
+        * a ``(rid, date)`` pair, or
+        * a mapping with ``rid`` and ``date`` keys,
+
+        and a single such item is also accepted (not just a list)."""
         src = await self.resolve(from_ref)
         dst = await self.resolve(to_ref)
         req = pb.ForwardMessagesRequest()
         req.peer.CopyFrom(dst.peer.to_out_proto())
-        for r in rids:
+        for rid, date in _iter_rid_date(messages):
             fwd = req.forwardedMessages.add()
             fwd.peer.CopyFrom(src.peer.to_proto())
-            fwd.rid = int(r)
+            fwd.rid = int(rid)
+            fwd.date.value = int(date)  # required: server matches on (rid, date)
             req.rid.append(random.getrandbits(63))
         return await self.call(
             "bale.messaging.v2.Messaging", "ForwardMessages", req, timeout=10.0,
